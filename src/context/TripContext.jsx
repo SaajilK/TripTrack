@@ -41,31 +41,31 @@ const dummyExpenses = [
 
 export function TripProvider({ children }) {
   const [trips, setTrips] = useState(() => {
-    const saved = localStorage.getItem('nomad_spend_trips');
+    const saved = localStorage.getItem('triptrack_trips') || localStorage.getItem('nomad_spend_trips');
     return saved ? JSON.parse(saved) : dummyTrips;
   });
 
   const [expenses, setExpenses] = useState(() => {
-    const saved = localStorage.getItem('nomad_spend_expenses');
+    const saved = localStorage.getItem('triptrack_expenses') || localStorage.getItem('nomad_spend_expenses');
     return saved ? JSON.parse(saved) : dummyExpenses;
   });
 
   const [categories, setCategories] = useState(() => {
-    const saved = localStorage.getItem('nomad_spend_categories');
+    const saved = localStorage.getItem('triptrack_categories') || localStorage.getItem('nomad_spend_categories');
     return saved ? JSON.parse(saved) : defaultCategories;
   });
 
   // Keep localStorage synced
   useEffect(() => {
-    localStorage.setItem('nomad_spend_trips', JSON.stringify(trips));
+    localStorage.setItem('triptrack_trips', JSON.stringify(trips));
   }, [trips]);
 
   useEffect(() => {
-    localStorage.setItem('nomad_spend_expenses', JSON.stringify(expenses));
+    localStorage.setItem('triptrack_expenses', JSON.stringify(expenses));
   }, [expenses]);
 
   useEffect(() => {
-    localStorage.setItem('nomad_spend_categories', JSON.stringify(categories));
+    localStorage.setItem('triptrack_categories', JSON.stringify(categories));
   }, [categories]);
 
   // Trip Actions

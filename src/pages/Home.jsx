@@ -105,7 +105,7 @@ export default function Home() {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Globe size={18} className="text-blue-600" />
-              <h2 className="font-bold text-slate-800 text-base">Nomad Overview (Global Analytics)</h2>
+              <h2 className="font-bold text-slate-800 text-base">TripTrack Overview (Global Analytics)</h2>
             </div>
             <button 
               onClick={() => setShowGlobalStats(!showGlobalStats)}
