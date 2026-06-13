@@ -12,42 +12,50 @@ const defaultCategories = [
 ];
 
 const dummyTrips = [
-  { id: '1', name: 'Summer in Paris 🇫🇷', startDate: '2026-06-01', endDate: '2026-06-05', budget: 150000 },
-  { id: '2', name: 'Bali Beach Getaway 🌴', startDate: '2026-07-10', endDate: '2026-07-16', budget: 80000 },
-  { id: '3', name: 'Tokyo Sakura Tour 🌸', startDate: '2026-10-15', endDate: '', budget: 250000 } // Preloaded Tokyo end date is empty to demonstrate ongoing trips!
+  { id: '1', name: 'Summer in Paris 🇫🇷', startDate: '2026-06-01', endDate: '2026-06-05', budget: 150000, members: ['You', 'Alice', 'Bob'] },
+  { id: '2', name: 'Bali Beach Getaway 🌴', startDate: '2026-07-10', endDate: '2026-07-16', budget: 80000, members: ['You', 'Alice'] },
+  { id: '3', name: 'Tokyo Sakura Tour 🌸', startDate: '2026-10-15', endDate: '', budget: 250000, members: ['You'] }
 ];
 
 const dummyExpenses = [
   // Paris Trip
-  { id: 'e1', tripId: '1', amount: 45000, category: 'Transport', description: 'Round-trip Flights', date: '2026-06-01' },
-  { id: 'e2', tripId: '1', amount: 60000, category: 'Hotel', description: 'Sleek Marais Apartment (4 nights)', date: '2026-06-01' },
-  { id: 'e3', tripId: '1', amount: 3500, category: 'Food', description: 'Dinner at Le Bistro', date: '2026-06-01' },
-  { id: 'e4', tripId: '1', amount: 1200, category: 'Miscellaneous', description: 'Orange eSIM Card', date: '2026-06-01' },
-  { id: 'e5', tripId: '1', amount: 4200, category: 'Activities', description: 'Eiffel Tower Access', date: '2026-06-02' },
-  { id: 'e6', tripId: '1', amount: 850, category: 'Food', description: 'Café & Croissant', date: '2026-06-02' },
-  { id: 'e7', tripId: '1', amount: 1500, category: 'Transport', description: 'Metro 10-Ride Pass', date: '2026-06-02' },
-  { id: 'e8', tripId: '1', amount: 8000, category: 'Shopping', description: 'Parisian Souvenirs & Skincare', date: '2026-06-03' },
-  { id: 'e9', tripId: '1', amount: 2200, category: 'Activities', description: 'Louvre Museum Ticket', date: '2026-06-03' },
-  { id: 'e10', tripId: '1', amount: 4800, category: 'Food', description: 'Seine Dinner Cruise', date: '2026-06-04' },
+  { id: 'e1', tripId: '1', amount: 45000, category: 'Transport', description: 'Round-trip Flights', date: '2026-06-01', paidBy: 'You' },
+  { id: 'e2', tripId: '1', amount: 60000, category: 'Hotel', description: 'Sleek Marais Apartment (4 nights)', date: '2026-06-01', paidBy: 'Alice' },
+  { id: 'e3', tripId: '1', amount: 3500, category: 'Food', description: 'Dinner at Le Bistro', date: '2026-06-01', paidBy: 'Bob' },
+  { id: 'e4', tripId: '1', amount: 1200, category: 'Miscellaneous', description: 'Orange eSIM Card', date: '2026-06-01', paidBy: 'You' },
+  { id: 'e5', tripId: '1', amount: 4200, category: 'Activities', description: 'Eiffel Tower Access', date: '2026-06-02', paidBy: 'You' },
+  { id: 'e6', tripId: '1', amount: 850, category: 'Food', description: 'Café & Croissant', date: '2026-06-02', paidBy: 'Alice' },
+  { id: 'e7', tripId: '1', amount: 1500, category: 'Transport', description: 'Metro 10-Ride Pass', date: '2026-06-02', paidBy: 'Bob' },
+  { id: 'e8', tripId: '1', amount: 8000, category: 'Shopping', description: 'Parisian Souvenirs & Skincare', date: '2026-06-03', paidBy: 'Alice' },
+  { id: 'e9', tripId: '1', amount: 2200, category: 'Activities', description: 'Louvre Museum Ticket', date: '2026-06-03', paidBy: 'You' },
+  { id: 'e10', tripId: '1', amount: 4800, category: 'Food', description: 'Seine Dinner Cruise', date: '2026-06-04', paidBy: 'Bob' },
   
   // Bali Trip
-  { id: 'e11', tripId: '2', amount: 25000, category: 'Transport', description: 'Flight to Denpasar', date: '2026-07-10' },
-  { id: 'e12', tripId: '2', amount: 30000, category: 'Hotel', description: 'Ubud Private Pool Villa', date: '2026-07-10' },
-  { id: 'e13', tripId: '2', amount: 1800, category: 'Food', description: 'Local Nasi Goreng & Drinks', date: '2026-07-11' },
-  { id: 'e14', tripId: '2', amount: 5000, category: 'Activities', description: 'Scuba Diving Nusa Penida', date: '2026-07-12' },
-  { id: 'e15', tripId: '2', amount: 1200, category: 'Transport', description: 'Scooter Rental (5 Days)', date: '2026-07-11' },
-  { id: 'e16', tripId: '2', amount: 4500, category: 'Shopping', description: 'Handcrafted Straw Bags & Souvenirs', date: '2026-07-14' }
+  { id: 'e11', tripId: '2', amount: 25000, category: 'Transport', description: 'Flight to Denpasar', date: '2026-07-10', paidBy: 'You' },
+  { id: 'e12', tripId: '2', amount: 30000, category: 'Hotel', description: 'Ubud Private Pool Villa', date: '2026-07-10', paidBy: 'Alice' },
+  { id: 'e13', tripId: '2', amount: 1800, category: 'Food', description: 'Local Nasi Goreng & Drinks', date: '2026-07-11', paidBy: 'Alice' },
+  { id: 'e14', tripId: '2', amount: 5000, category: 'Activities', description: 'Scuba Diving Nusa Penida', date: '2026-07-12', paidBy: 'You' },
+  { id: 'e15', tripId: '2', amount: 1200, category: 'Transport', description: 'Scooter Rental (5 Days)', date: '2026-07-11', paidBy: 'You' },
+  { id: 'e16', tripId: '2', amount: 4500, category: 'Shopping', description: 'Handcrafted Straw Bags & Souvenirs', date: '2026-07-14', paidBy: 'Alice' }
 ];
 
 export function TripProvider({ children }) {
   const [trips, setTrips] = useState(() => {
     const saved = localStorage.getItem('triptrack_trips') || localStorage.getItem('nomad_spend_trips');
-    return saved ? JSON.parse(saved) : dummyTrips;
+    const loadedTrips = saved ? JSON.parse(saved) : dummyTrips;
+    return loadedTrips.map(trip => ({
+      ...trip,
+      members: trip.members && trip.members.length > 0 ? trip.members : ['You']
+    }));
   });
 
   const [expenses, setExpenses] = useState(() => {
     const saved = localStorage.getItem('triptrack_expenses') || localStorage.getItem('nomad_spend_expenses');
-    return saved ? JSON.parse(saved) : dummyExpenses;
+    const loadedExpenses = saved ? JSON.parse(saved) : dummyExpenses;
+    return loadedExpenses.map(expense => ({
+      ...expense,
+      paidBy: expense.paidBy || 'You'
+    }));
   });
 
   const [categories, setCategories] = useState(() => {

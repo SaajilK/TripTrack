@@ -5,12 +5,16 @@ import Button from './ui/Button';
 import { useTripContext } from '../context/TripContext';
 
 export default function AddExpenseModal({ isOpen, onClose, onSave, tripId, defaultDate, expenseToEdit }) {
-  const { categories } = useTripContext();
+  const { categories, trips } = useTripContext();
+  const trip = trips.find((t) => t.id === tripId);
+  const members = trip?.members || ['You'];
+
   const [formData, setFormData] = useState({
     amount: '',
     category: 'Food',
     description: '',
     date: defaultDate || new Date().toISOString().split('T')[0],
+    paidBy: 'You',
   });
 
   // Sync state when modal is opened for editing
@@ -21,6 +25,7 @@ export default function AddExpenseModal({ isOpen, onClose, onSave, tripId, defau
         category: expenseToEdit.category,
         description: expenseToEdit.description,
         date: expenseToEdit.date,
+        paidBy: expenseToEdit.paidBy || 'You',
       });
     } else {
       setFormData({
@@ -28,9 +33,10 @@ export default function AddExpenseModal({ isOpen, onClose, onSave, tripId, defau
         category: categories.length > 0 ? categories[0].name : 'Food',
         description: '',
         date: defaultDate || new Date().toISOString().split('T')[0],
+        paidBy: members[0] || 'You',
       });
     }
-  }, [expenseToEdit, isOpen, defaultDate, categories]);
+  }, [expenseToEdit, isOpen, defaultDate, categories, members]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -43,6 +49,7 @@ export default function AddExpenseModal({ isOpen, onClose, onSave, tripId, defau
       category: formData.category,
       description: formData.description,
       date: formData.date,
+      paidBy: formData.paidBy || 'You',
     });
 
     setFormData({
@@ -50,6 +57,7 @@ export default function AddExpenseModal({ isOpen, onClose, onSave, tripId, defau
       category: categories.length > 0 ? categories[0].name : 'Food',
       description: '',
       date: defaultDate || new Date().toISOString().split('T')[0],
+      paidBy: members[0] || 'You',
     });
     onClose();
   };
@@ -110,15 +118,32 @@ export default function AddExpenseModal({ isOpen, onClose, onSave, tripId, defau
           />
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Date</label>
-          <input
-            type="date"
-            required
-            className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-            value={formData.date}
-            onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-          />
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Date</label>
+            <input
+              type="date"
+              required
+              className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              value={formData.date}
+              onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Paid By</label>
+            <select
+              className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-semibold text-slate-800"
+              value={formData.paidBy}
+              onChange={(e) => setFormData({ ...formData, paidBy: e.target.value })}
+            >
+              {members.map((member) => (
+                <option key={member} value={member}>
+                  👤 {member}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <div className="pt-2">

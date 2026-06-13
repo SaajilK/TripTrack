@@ -30,6 +30,25 @@ export default function TripDetails() {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [newMemberName, setNewMemberName] = useState('');
+
+  const handleAddMember = (e) => {
+    e.preventDefault();
+    const cleanName = newMemberName.trim();
+    if (!cleanName) return;
+
+    const currentMembers = trip.members || ['You'];
+    if (currentMembers.some((m) => m.toLowerCase() === cleanName.toLowerCase())) {
+      alert('Member already exists!');
+      return;
+    }
+
+    updateTrip({
+      ...trip,
+      members: [...currentMembers, cleanName],
+    });
+    setNewMemberName('');
+  };
 
   // Retrieve current trip
   const trip = useMemo(() => trips.find((t) => t.id === tripId), [trips, tripId]);
@@ -89,6 +108,85 @@ export default function TripDetails() {
     });
     return totals;
   }, [tripExpenses]);
+
+  // Splitting & debt calculations
+  const splittingSummary = useMemo(() => {
+    const tripMembers = trip.members || ['You'];
+    const numMembers = tripMembers.length;
+    const share = numMembers > 0 ? totalSpent / numMembers : 0;
+
+    const memberPaid = {};
+    tripMembers.forEach((m) => { memberPaid[m] = 0; });
+    tripExpenses.forEach((e) => {
+      const payer = e.paidBy || 'You';
+      memberPaid[payer] = (memberPaid[payer] || 0) + e.amount;
+    });
+
+    return tripMembers.map((member) => {
+      const paid = memberPaid[member] || 0;
+      const balance = paid - share;
+      const numExpenses = tripExpenses.filter((e) => (e.paidBy || 'You') === member).length;
+      return {
+        name: member,
+        paid,
+        share,
+        balance,
+        numExpenses
+      };
+    });
+  }, [trip, tripExpenses, totalSpent]);
+
+  const settlements = useMemo(() => {
+    const tripMembers = trip.members || ['You'];
+    const numMembers = tripMembers.length;
+    if (numMembers <= 1 || tripExpenses.length === 0) return [];
+
+    const share = totalSpent / numMembers;
+    const memberPaid = {};
+    tripMembers.forEach((m) => { memberPaid[m] = 0; });
+    tripExpenses.forEach((e) => {
+      const payer = e.paidBy || 'You';
+      memberPaid[payer] = (memberPaid[payer] || 0) + e.amount;
+    });
+
+    const balances = tripMembers.map((m) => ({
+      name: m,
+      balance: (memberPaid[m] || 0) - share
+    }));
+
+    const debtors = balances.filter((b) => b.balance < -0.01).sort((a, b) => a.balance - b.balance);
+    const creditors = balances.filter((b) => b.balance > 0.01).sort((a, b) => b.balance - a.balance);
+
+    const transactions = [];
+    let dIdx = 0;
+    let cIdx = 0;
+
+    const localDebtors = debtors.map((d) => ({ ...d, balance: Math.abs(d.balance) }));
+    const localCreditors = creditors.map((c) => ({ ...c }));
+
+    while (dIdx < localDebtors.length && cIdx < localCreditors.length) {
+      const debtor = localDebtors[dIdx];
+      const creditor = localCreditors[cIdx];
+
+      const amountToPay = Math.min(debtor.balance, creditor.balance);
+
+      if (amountToPay > 0.01) {
+        transactions.push({
+          from: debtor.name,
+          to: creditor.name,
+          amount: amountToPay
+        });
+      }
+
+      debtor.balance -= amountToPay;
+      creditor.balance -= amountToPay;
+
+      if (debtor.balance < 0.01) dIdx++;
+      if (creditor.balance < 0.01) cIdx++;
+    }
+
+    return transactions;
+  }, [trip, tripExpenses, totalSpent]);
 
   // Filter and search logic for display list
   const filteredExpenses = useMemo(() => {
@@ -277,6 +375,130 @@ export default function TripDetails() {
         )}
       </div>
 
+      {/* Members & Splitting Dashboard */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-1.5">
+          <span className="text-lg">👥</span>
+          <h2 className="text-lg font-bold text-slate-800">Members & Splitting Dashboard</h2>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Card 1: Member Balances */}
+          <div className="bg-white border border-slate-100 rounded-3xl p-5 shadow-sm space-y-4 lg:col-span-2">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Member Balances</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              {splittingSummary.map((item) => {
+                const isCreditor = item.balance > 0.01;
+                const isDebtor = item.balance < -0.01;
+                const absBalance = Math.abs(item.balance);
+                
+                return (
+                  <div 
+                    key={item.name}
+                    className="p-4 bg-slate-50/50 border border-slate-100 rounded-2xl flex flex-col justify-between space-y-3 hover:border-slate-200 transition-colors"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs">
+                          {item.name.slice(0, 2).toUpperCase()}
+                        </div>
+                        <div>
+                          <span className="text-sm font-bold text-slate-800 block">{item.name}</span>
+                          <span className="text-[10px] text-slate-400 font-semibold">{item.numExpenses} transactions</span>
+                        </div>
+                      </div>
+                      
+                      {/* Balance status badge */}
+                      {isCreditor && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-100/30">
+                          Owed {formatCurrency(absBalance)}
+                        </span>
+                      )}
+                      {isDebtor && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-red-500 border border-red-100/30">
+                          Owes {formatCurrency(absBalance)}
+                        </span>
+                      )}
+                      {!isCreditor && !isDebtor && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500">
+                          Settled up
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex justify-between border-t border-slate-100/80 pt-2.5 text-xs text-slate-500">
+                      <div>
+                        <span className="text-[10px] text-slate-400 block mb-0.5">Paid</span>
+                        <span className="font-bold text-slate-700">{formatCurrency(item.paid)}</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-[10px] text-slate-400 block mb-0.5">Share</span>
+                        <span className="font-medium text-slate-600">{formatCurrency(item.share)}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Card 2: Splitting Settlements & Quick Add */}
+          <div className="flex flex-col gap-6">
+            {/* Settlements Panel */}
+            <div className="bg-white border border-slate-100 rounded-3xl p-5 shadow-sm flex-1 space-y-4">
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Suggested Transfers</h3>
+              
+              {settlements.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-6 text-center text-slate-400 text-xs gap-1.5 h-full">
+                  <span className="text-xl">🎉</span>
+                  <p className="font-semibold text-slate-600">All settled up!</p>
+                  <p className="text-[10px] max-w-[180px]">No transfers are needed to balance this trip's budget.</p>
+                </div>
+              ) : (
+                <div className="space-y-2.5 max-h-[160px] overflow-y-auto pr-1">
+                  {settlements.map((tx, idx) => (
+                    <div 
+                      key={idx}
+                      className="p-3 bg-blue-50/30 border border-blue-100/20 rounded-xl flex items-center justify-between text-xs"
+                    >
+                      <div className="flex items-center gap-2 font-bold text-slate-700">
+                        <span className="text-slate-900">{tx.from}</span>
+                        <span className="text-blue-500 text-[10px]">➔</span>
+                        <span className="text-slate-900">{tx.to}</span>
+                      </div>
+                      <span className="font-black text-blue-600">{formatCurrency(tx.amount)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Quick Add Form Panel */}
+            <div className="bg-slate-50/50 border border-dashed border-slate-200 p-4 rounded-3xl space-y-3">
+              <div>
+                <h4 className="text-xs font-bold text-slate-700">Add Trip Member</h4>
+                <p className="text-[10px] text-slate-400 mt-0.5">Invite others to split costs.</p>
+              </div>
+              <form onSubmit={handleAddMember} className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Name (e.g. Alice)"
+                  className="flex-1 px-3 py-1.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs font-medium"
+                  value={newMemberName}
+                  onChange={(e) => setNewMemberName(e.target.value)}
+                />
+                <button
+                  type="submit"
+                  className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-colors focus:outline-none"
+                >
+                  Add
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Expenses List Section */}
       <div className="space-y-6 pt-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -365,9 +587,14 @@ export default function TripDetails() {
                             </div>
                             <div>
                               <h4 className="font-bold text-slate-800 text-sm md:text-base line-clamp-1">{exp.description}</h4>
-                              <span className="inline-block mt-0.5 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">
-                                {exp.category}
-                              </span>
+                              <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                                <span className="inline-block text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-500">
+                                  {exp.category}
+                                </span>
+                                <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-100/30">
+                                  👤 Paid by {exp.paidBy || 'You'}
+                                </span>
+                              </div>
                             </div>
                           </div>
 
